@@ -42,7 +42,7 @@ MakeVersion(BITPLANES 1 8 0)
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BitPlanes")
 set(CPACK_PACKAGE_VENDOR              "halismai Carnegie Mellon University")
 set(CPACK_PACKAGE_CONTACT             "halismai@cs.cmu.edu")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+# set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
 set(CPACK_RESOURCE_FILE_LICENSE    "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${BITPLANES_VERSION}")
@@ -211,7 +211,7 @@ add_subdirectory(core)
 
 if(NOT IOS)
   add_subdirectory(test)
-  #add_subdirectory(demo_cv)
+  add_subdirectory(demo_cv)
 endif()
 
 
