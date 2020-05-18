@@ -18,18 +18,13 @@
 #include "bitplanes/core/viz.h"
 #include "bitplanes/core/types.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
-#include <array>
-
-namespace {
+namespace bp{
 
 /**
  * returns the tranformed corners of the bounding box
  */
-static inline
+// static inline
 std::array<cv::Point2f,4> RectToPoints(const cv::Rect& r, const float* H_ptr)
 {
   std::array<cv::Point2f,4> ret;
@@ -48,9 +43,35 @@ std::array<cv::Point2f,4> RectToPoints(const cv::Rect& r, const float* H_ptr)
   p = H * Eigen::Vector3f(r.x          , r.y + r.height, 1.0); p /= p[2];
   ret[3] = cv::Point2f(p.x(), p.y());
 
-  return ret;
+  return ret; // (x_min, ymin), (x_max, y_min), (x_max, y_max), (x_min, y_max)
 
 }
+
+cv::Rect RectToROI(const cv::Rect &r, const float *H_ptr)
+{
+  std::array<cv::Point2f, 4> ret;
+  const Eigen::Matrix3f H = Eigen::Matrix3f::Map(H_ptr);
+
+  Eigen::Vector3f p;
+  p = H * Eigen::Vector3f(r.x, r.y, 1.0);
+  p /= p[2];
+  ret[0] = cv::Point2f(p.x(), p.y());
+
+  p = H * Eigen::Vector3f(r.x + r.width, r.y, 1.0);
+  p /= p[2];
+  ret[1] = cv::Point2f(p.x(), p.y());
+
+  p = H * Eigen::Vector3f(r.x + r.width, r.y + r.height, 1.0);
+  p /= p[2];
+  ret[2] = cv::Point2f(p.x(), p.y());
+
+  p = H * Eigen::Vector3f(r.x, r.y + r.height, 1.0);
+  p /= p[2];
+  ret[3] = cv::Point2f(p.x(), p.y());
+
+  return cv::Rect(ret[0], ret[2]);
+}
+
 
 cv::Scalar ToOpenCV(bp::ColorByName clr, int alpha = 128)
 {
@@ -85,10 +106,10 @@ cv::Scalar ToOpenCV(bp::ColorByName clr, int alpha = 128)
   return ret;
 }
 
-} // namespace
+// } // namespace
 
 
-namespace bp {
+// namespace bp {
 
 void DrawTrackingResult(cv::Mat& dst, const cv::Mat& src, const cv::Rect& r,
                         const float* H, ColorByName clr, int thickness, int type,

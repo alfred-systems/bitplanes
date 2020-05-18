@@ -78,8 +78,9 @@ RUN apt-get -y remove \
     libv4l-dev \
     && \
     apt-get clean
+RUN apt-get -y install vim
 
-RUN echo "color_promp=true" > ~/.bashrc
+RUN sed -i "1iforce_color_prompt=true" ~/.bashrc
 
 # Define default command.
 CMD ["python3 --version"]

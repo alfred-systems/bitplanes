@@ -19,6 +19,7 @@
 #include "bitplanes/core/internal/ct.h"
 #include "bitplanes/core/motion_model.h"
 #include "bitplanes/core/homography.h"
+#include "bitplanes/core/translation.h"
 #include "bitplanes/core/debug.h"
 #include "bitplanes/utils/error.h"
 
@@ -279,5 +280,6 @@ getCoordinateNormalization(const cv::Rect& roi, Transform& T, Transform& T_inv) 
 }
 
 template class BitPlanesChannelDataSubSampled<Homography>;
+// template class BitPlanesChannelDataSubSampled<Translation>;
 }
 

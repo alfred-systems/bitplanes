@@ -88,7 +88,8 @@ class BitPlanesChannelData
 }; // BitPlanesChannelData
 
 
-template <class> class BitPlanesChannelDataSubSampled;
+template <class>
+class BitPlanesChannelDataSubSampled;
 
 template <> template <class M>
 struct channel_data_traits< BitPlanesChannelDataSubSampled<M> >

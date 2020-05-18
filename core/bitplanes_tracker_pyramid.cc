@@ -17,6 +17,7 @@
 
 #include <bitplanes/core/bitplanes_tracker_pyramid.h>
 #include <bitplanes/core/homography.h>
+#include <bitplanes/core/translation.h>
 #include <bitplanes/core/debug.h>
 #include <bitplanes/utils/error.h>
 
@@ -79,6 +80,7 @@ void BitPlanesTrackerPyramid<M>::setTemplate(const cv::Mat& I, const cv::Rect& b
   _T_init.setIdentity();
 }
 
+
 template <class M>
 Result BitPlanesTrackerPyramid<M>::track(const cv::Mat& I, const Transform& T_init)
 {
@@ -101,6 +103,7 @@ Result BitPlanesTrackerPyramid<M>::track(const cv::Mat& I, const Transform& T_in
 }
 
 template class BitPlanesTrackerPyramid<Homography>;
+// template class BitPlanesTrackerPyramid<Translation>;
 
 }; // bp
 

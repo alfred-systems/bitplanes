@@ -20,6 +20,7 @@
 #include "bitplanes/core/internal/optim_common.h"
 #include "bitplanes/core/internal/imwarp.h"
 #include "bitplanes/core/homography.h"
+#include "bitplanes/core/translation.h"
 #include "bitplanes/utils/timer.h"
 #include "bitplanes/utils/error.h"
 
@@ -155,5 +156,6 @@ void BitplanesTracker<M>::smoothImage(cv::Mat& I, const cv::Rect& /*roi*/)
 
 
 template class BitplanesTracker<Homography>;
+// template class BitplanesTracker<Translation>;
 
 }; // bp

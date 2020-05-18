@@ -18,6 +18,7 @@
 #include "bitplanes/core/internal/bitplanes_channel_data_packed2.h"
 #include "bitplanes/core/internal/ct.h"
 #include "bitplanes/core/homography.h"
+#include "bitplanes/core/translation.h"
 #include "bitplanes/core/debug.h"
 #include "bitplanes/utils/error.h"
 
@@ -108,6 +109,7 @@ void BitPlanesChannelDataPacked2<M>::computeResiduals(const cv::Mat& Iw,
 }
 
 template class BitPlanesChannelDataPacked2<Homography>;
+// template class BitPlanesChannelDataPacked2<Translation>;
 
 } // bp
 

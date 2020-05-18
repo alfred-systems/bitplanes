@@ -210,8 +210,9 @@ add_subdirectory(utils)
 add_subdirectory(core)
 
 if(NOT IOS)
-  add_subdirectory(test)
-  add_subdirectory(demo_cv)
+  # add_subdirectory(test)
+  # add_subdirectory(demo_cv)
+  add_subdirectory(demo_cv_2)
 endif()
 
 

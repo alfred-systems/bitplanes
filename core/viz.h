@@ -18,7 +18,11 @@
 #ifndef BITPLANES_CORE_VIZ_H
 #define BITPLANES_CORE_VIZ_H
 
+#include <array>
 #include "bitplanes/core/internal/cvfwd.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 namespace bp {
 
@@ -44,6 +48,9 @@ void DrawTrackingResult(cv::Mat& dst, const cv::Mat& src, const cv::Rect&,
                         const float* H, ColorByName = ColorByName::Yellow,
                         int line_thickness = 4, int line_type = 16,
                         int line_shift = 0);
+
+std::array<cv::Point2f, 4> RectToPoints(const cv::Rect &r, const float *H_ptr);
+cv::Rect RectToROI(const cv::Rect &r, const float *H_ptr);
 
 }; // bp
 

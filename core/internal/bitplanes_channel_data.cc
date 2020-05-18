@@ -21,6 +21,7 @@
 #include "bitplanes/core/internal/census.h"
 #include "bitplanes/core/internal/ct.h"
 #include "bitplanes/core/homography.h"
+#include "bitplanes/core/translation.h"
 #include "bitplanes/core/debug.h"
 #include "bitplanes/utils/error.h"
 
@@ -118,7 +119,7 @@ template <class M>
 void BitPlanesChannelData<M>::computeResiduals(const cv::Mat& Iw, Pixels& residuals) const
 {
   simd::census_residual(Iw, _pixels, residuals);
-#if 0
+  #if 0
   residuals.resize(_pixels.size());
   const auto* pixels_ptr = _pixels.data();
   float* residuals_ptr = residuals.data();
@@ -188,10 +189,11 @@ void BitPlanesChannelData<M>::computeResiduals(const cv::Mat& Iw, Pixels& residu
       *residuals_ptr++ = ((*(p + src_stride + 1) >= c)) - *pixels_ptr++;
     }
   }
-#endif
+  #endif
 }
 
 template class BitPlanesChannelData<Homography>;
+// template class BitPlanesChannelData<Translation>;
 
 } // bp
 
