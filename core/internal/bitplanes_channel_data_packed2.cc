@@ -109,7 +109,7 @@ void BitPlanesChannelDataPacked2<M>::computeResiduals(const cv::Mat& Iw,
 }
 
 template class BitPlanesChannelDataPacked2<Homography>;
-// template class BitPlanesChannelDataPacked2<Translation>;
+template class BitPlanesChannelDataPacked2<Translation>;
 
 } // bp
 

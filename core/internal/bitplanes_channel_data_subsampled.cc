@@ -128,44 +128,85 @@ computeResiduals(const cv::Mat& Iw, Residuals& residuals) const
   residuals=Map<Vector_<CType>, Aligned>(buf,_pixels.size()*8,1).template cast<float>();
 }
 
-template <class M>
-float BitPlanesChannelDataSubSampled<M>::
-doLinearize(const cv::Mat& Iw, Gradient& g) const
-{
-  g.setZero();
-  float ret = 0.0f;
+// template <class M>
+// float BitPlanesChannelDataSubSampled<M>::
+// doLinearize(const cv::Mat& Iw, Gradient& g) const
+// {
+//   g.setZero();
+//   float ret = 0.0f;
 
-  const uint8_t* c0_ptr = _pixels.data();
-  const int src_stride = Iw.cols;
+//   const uint8_t* c0_ptr = _pixels.data();
+//   const int src_stride = Iw.cols;
 
-  for(int y = 1, i = 0; y < Iw.rows - 1; y += _sub_sampling)
-  {
-    const auto srow = Iw.ptr<const uint8_t>(y);
-    for(int x = 1; x < Iw.cols - 1; x += _sub_sampling, i += 8)
-    {
-      const auto* p = srow + x;
-      const auto* p0 = p - src_stride;
-      const auto* p1 = p + src_stride;
+//   for(int y = 1, i = 0; y < Iw.rows - 1; y += _sub_sampling)
+//   {
+//     const auto srow = Iw.ptr<const uint8_t>(y);
+//     for(int x = 1; x < Iw.cols - 1; x += _sub_sampling, i += 8)
+//     {
+//       const auto* p = srow + x;
+//       const auto* p0 = p - src_stride;
+//       const auto* p1 = p + src_stride;
 
-      const auto c = *c0_ptr++;
+//       const auto c = *c0_ptr++;
 
-      Eigen::Matrix<float,8,1> err;
-      err[0] = (p0[-1] > *p) - ((c & (1<<0)) >> 0);
-      err[1] = (p0[ 0] > *p) - ((c & (1<<1)) >> 1);
-      err[2] = (p0[ 1] > *p) - ((c & (1<<2)) >> 2);
-      err[3] = (p [-1] > *p) - ((c & (1<<3)) >> 3);
-      err[4] = (p [ 0] > *p) - ((c & (1<<4)) >> 4);
-      err[5] = (p1[-1] > *p) - ((c & (1<<5)) >> 5);
-      err[6] = (p1[ 0] > *p) - ((c & (1<<6)) >> 6);
-      err[7] = (p1[ 1] > *p) - ((c & (1<<7)) >> 7);
+//       Eigen::Matrix<float,8,1> err;
+//       err[0] = (p0[-1] > *p) - ((c & (1<<0)) >> 0);
+//       err[1] = (p0[ 0] > *p) - ((c & (1<<1)) >> 1);
+//       err[2] = (p0[ 1] > *p) - ((c & (1<<2)) >> 2);
+//       err[3] = (p [-1] > *p) - ((c & (1<<3)) >> 3);
+//       err[4] = (p [ 0] > *p) - ((c & (1<<4)) >> 4);
+//       err[5] = (p1[-1] > *p) - ((c & (1<<5)) >> 5);
+//       err[6] = (p1[ 0] > *p) - ((c & (1<<6)) >> 6);
+//       err[7] = (p1[ 1] > *p) - ((c & (1<<7)) >> 7);
 
-      g.noalias() += _jacobian.template block<8,8>(i, 0) * err;
-      ret += err.squaredNorm();
-    }
-  }
+//       g.noalias() += _jacobian.template block<8,8>(i, 0) * err;
+//       ret += err.squaredNorm();
+//     }
+//   }
 
-  return ret;
-}
+//   return ret;
+// }
+
+
+// template <>
+// float BitPlanesChannelDataSubSampled<Translation>::
+// doLinearize(const cv::Mat& Iw, Gradient& g) const
+// {
+//   g.setZero();
+//   float ret = 0.0f;
+
+//   const uint8_t* c0_ptr = _pixels.data();
+//   const int src_stride = Iw.cols;
+
+//   for(int y = 1, i = 0; y < Iw.rows - 1; y += _sub_sampling)
+//   {
+//     const auto srow = Iw.ptr<const uint8_t>(y);
+//     for(int x = 1; x < Iw.cols - 1; x += _sub_sampling, i += 8)
+//     {
+//       const auto* p = srow + x;
+//       const auto* p0 = p - src_stride;
+//       const auto* p1 = p + src_stride;
+
+//       const auto c = *c0_ptr++;
+
+//       Eigen::Matrix<float,2,1> err;
+//       err[0] = (p0[-1] > *p) - ((c & (1<<0)) >> 0);
+//       err[1] = (p0[ 0] > *p) - ((c & (1<<1)) >> 1);
+//       err[2] = (p0[ 1] > *p) - ((c & (1<<2)) >> 2);
+//       err[3] = (p [-1] > *p) - ((c & (1<<3)) >> 3);
+//       err[4] = (p [ 0] > *p) - ((c & (1<<4)) >> 4);
+//       err[5] = (p1[-1] > *p) - ((c & (1<<5)) >> 5);
+//       err[6] = (p1[ 0] > *p) - ((c & (1<<6)) >> 6);
+//       err[7] = (p1[ 1] > *p) - ((c & (1<<7)) >> 7);
+
+//       g.noalias() += _jacobian.template block<8,8>(i, 0) * err;
+//       ret += err.squaredNorm();
+//     }
+//   }
+
+//   return ret;
+// }
+
 
 template <class Derived> static inline
 Eigen::Matrix<typename Derived::PlainObject::Scalar,
@@ -280,6 +321,6 @@ getCoordinateNormalization(const cv::Rect& roi, Transform& T, Transform& T_inv) 
 }
 
 template class BitPlanesChannelDataSubSampled<Homography>;
-// template class BitPlanesChannelDataSubSampled<Translation>;
+template class BitPlanesChannelDataSubSampled<Translation>;
 }
 

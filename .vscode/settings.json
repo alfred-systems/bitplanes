@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        ".pylintrc": "bat",
+        "tuple": "cpp"
+    }
+}

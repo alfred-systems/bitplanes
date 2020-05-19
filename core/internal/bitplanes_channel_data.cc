@@ -193,7 +193,7 @@ void BitPlanesChannelData<M>::computeResiduals(const cv::Mat& Iw, Pixels& residu
 }
 
 template class BitPlanesChannelData<Homography>;
-// template class BitPlanesChannelData<Translation>;
+template class BitPlanesChannelData<Translation>;
 
 } // bp
 

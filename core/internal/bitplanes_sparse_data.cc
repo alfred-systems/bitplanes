@@ -160,7 +160,7 @@ linearize(const cv::Mat& I, const Matrix33f& T, Gradient& g) const
 }
 
 template class BitPlanesSparseData<Homography>;
-// template class BitPlanesSparseData<Translation>;
+template class BitPlanesSparseData<Translation>;
 
 } // bp
 

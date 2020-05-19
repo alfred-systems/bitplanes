@@ -103,7 +103,7 @@ Result BitPlanesTrackerPyramid<M>::track(const cv::Mat& I, const Transform& T_in
 }
 
 template class BitPlanesTrackerPyramid<Homography>;
-// template class BitPlanesTrackerPyramid<Translation>;
+template class BitPlanesTrackerPyramid<Translation>;
 
 }; // bp
 

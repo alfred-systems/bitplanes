@@ -156,6 +156,6 @@ void BitplanesTracker<M>::smoothImage(cv::Mat& I, const cv::Rect& /*roi*/)
 
 
 template class BitplanesTracker<Homography>;
-// template class BitplanesTracker<Translation>;
+template class BitplanesTracker<Translation>;
 
 }; // bp
