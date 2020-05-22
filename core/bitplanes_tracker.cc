@@ -37,6 +37,7 @@ BitplanesTracker<M>::BitplanesTracker(AlgorithmParameters p)
   , _T(Matrix33f::Identity()), _T_inv(Matrix33f::Identity())
   , _interp(cv::INTER_LINEAR) {}
 
+
 template <class M>
 void BitplanesTracker<M>::setTemplate(const cv::Mat& image, const cv::Rect& bbox)
 {
@@ -49,6 +50,7 @@ void BitplanesTracker<M>::setTemplate(const cv::Mat& image, const cv::Rect& bbox
 
   _solver.compute(-_cdata.hessian());
 }
+
 
 template <class M>
 Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
@@ -136,6 +138,7 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
   return ret;
 }
 
+
 template <class M> inline
 float BitplanesTracker<M>::linearize(const cv::Mat& I, const Transform& T)
 {
@@ -146,6 +149,7 @@ float BitplanesTracker<M>::linearize(const cv::Mat& I, const Transform& T)
 
   return _gradient.template lpNorm<Eigen::Infinity>();
 }
+
 
 template <class M> inline
 void BitplanesTracker<M>::smoothImage(cv::Mat& I, const cv::Rect& /*roi*/)

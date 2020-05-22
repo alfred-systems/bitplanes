@@ -26,7 +26,7 @@ namespace bp {
  * Compute the census signature at the pixel pointed to by 'p'
  *
  * \param p pointer to pixel
- * \param s image stride
+ * \param s image stride (row?)
  * \return census signature
  */
 FORCE_INLINE uint8_t CensusSignature(const uint8_t* p, int s)

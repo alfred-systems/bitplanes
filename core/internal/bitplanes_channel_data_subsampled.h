@@ -56,7 +56,7 @@ class BitPlanesChannelDataSubSampled :
 
   void computeResiduals(const cv::Mat& Iw, Residuals& residuals) const;
 
-  // float doLinearize(const cv::Mat& Iw, Gradient&) const;
+  float doLinearize(const cv::Mat& Iw, Gradient&) const;
 
   void warpImage(const cv::Mat& src, const Transform& T, const cv::Rect& roi,
                  cv::Mat& dst, int interp = cv::INTER_LINEAR, float border = 0.0f);

@@ -49,10 +49,13 @@ void get_optical_flow(TrackerType *tracker, cv::Mat *ref_frame, cv::Mat *new_fra
     }
 }
 
-
-int main()
+int main(int argc, char *argv[])
 {
-    std::cout << "Hello World!" << std::endl;
+    std::cout << std::string(argv[1]) + ", " + std::string(argv[2]) + ", " + std::string(argv[3]) + ", " + std::string(argv[4]) << std::endl;
+    int roi_x = std::stoi(std::string(argv[2]));
+    int roi_y = std::stoi(std::string(argv[3]));
+    int roi_size = std::stoi(std::string(argv[4]));
+    std::cout << "Hello World!" + std::to_string(roi_x) + ", " + std::to_string(roi_y) << std::endl;
 
     bp::AlgorithmParameters params;
     params.num_levels = 2;
@@ -63,31 +66,53 @@ int main()
     std::unique_ptr<TrackerType> _tracker;
     _tracker.reset(new TrackerType(params));
 
-    cv::Mat template_image;
+    // // cv::Mat template_image;
+    // // cv::Mat template_resize;
 
-    template_image = cv::imread("template.jpg");
-    cv::Mat template_image_gray(template_image.rows, template_image.cols, 0);
-    cv::cvtColor(template_image, template_image_gray, cv::COLOR_BGR2GRAY);
-
-    cv::Rect template_image_roi(259, 284, 360 - 259, 416 - 284);
-    _tracker->setTemplate(template_image_gray, template_image_roi);
+    // // template_image = cv::imread("template_dark.jpg");
+    // // cv::resize(template_image, template_resize, cv::Size(256, 256));
+    // // // template_resize = template_image;
     
-    cv::VideoCapture cap("video.mp4");
+    // // cv::Mat template_image_gray(template_resize.rows, template_resize.cols, 0);
+    
+    // cv::cvtColor(template_resize, template_image_gray, cv::COLOR_BGR2GRAY);
+
+    cv::Rect template_image_roi(roi_x, roi_y, roi_size, roi_size);
+    // _tracker->setTemplate(template_image_gray, template_image_roi);
+
+    std::string input_video(argv[1]);
+    cv::VideoCapture cap(input_video);
     bp::Result track_result;
     bp::Matrix33f tform(bp::Matrix33f::Identity());
     int frame_count = 0;
 
+    cv::Mat first_frame;
     cv::Mat last_frame;
+    cap >> first_frame;
+    cv::VideoWriter out_video(
+        "outcpp.mp4",
+        CV_FOURCC('M', 'P', '4', 'V'),
+        10,
+        cv::Size(first_frame.cols, first_frame.rows)
+    );
+
     while(true) {
         cv::Mat image;
-        cv::Mat resize_image;
+        cv::Mat source_image;
         cv::Mat image_gray;
         cv::Mat det_image;
-        cap >> image;
-        cv::resize(image, resize_image, cv::Size(256, 256));
-
-        if (image.empty()) break;
+        
+        cap >> source_image;
+        if (source_image.empty())
+            break;
+        
+        // cv::resize(source_image, image, cv::Size(256, 256));
+        image = source_image;
         cv::cvtColor(image, image_gray, cv::COLOR_BGR2GRAY);
+
+        if (frame_count == 0) {
+            _tracker->setTemplate(image_gray, template_image_roi);
+        }
 
         // if (frame_count > 0) {
         //     using milli = std::chrono::milliseconds;
@@ -111,16 +136,25 @@ int main()
         
         if (frame_count % 1 == 0) {
             template_image_roi = bp::RectToROI(template_image_roi, tform.data());
+            std::cout << std::to_string(template_image_roi.x) << ", " << std::to_string(template_image_roi.y) << ", "
+                      << std::to_string(template_image_roi.width) << ", " << std::to_string(template_image_roi.height) << std::endl;
             _tracker->setTemplate(image_gray, template_image_roi);
         }
 
-        std::vector<int> compression_params;
-        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-        compression_params.push_back(9);
-        cv::imwrite(det_image_path, det_image, compression_params);
-        std::cout << "[SAVE] " + det_image_path << std::endl;
+        if (frame_count % 10 == 0) {
+            std::vector<int> compression_params;
+            compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+            compression_params.push_back(9);
+            cv::imwrite(det_image_path, det_image, compression_params);
+
+            out_video.write(det_image);
+
+            std::cout << "[SAVE] " + det_image_path << std::endl;
+        }
         frame_count++;
     }
 
+    out_video.release();
+    cap.release();
     return 0;
 }
