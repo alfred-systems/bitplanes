@@ -18,6 +18,7 @@
 #include <bitplanes/core/bitplanes_tracker_pyramid.h>
 #include <bitplanes/core/homography.h>
 #include <bitplanes/core/translation.h>
+#include <bitplanes/core/affine.h>
 #include <bitplanes/core/debug.h>
 #include <bitplanes/utils/error.h>
 
@@ -104,6 +105,7 @@ Result BitPlanesTrackerPyramid<M>::track(const cv::Mat& I, const Transform& T_in
 
 template class BitPlanesTrackerPyramid<Homography>;
 template class BitPlanesTrackerPyramid<Translation>;
+template class BitPlanesTrackerPyramid<Affine>;
 
 }; // bp
 

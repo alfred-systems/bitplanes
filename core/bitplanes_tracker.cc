@@ -21,6 +21,7 @@
 #include "bitplanes/core/internal/imwarp.h"
 #include "bitplanes/core/homography.h"
 #include "bitplanes/core/translation.h"
+#include "bitplanes/core/affine.h"
 #include "bitplanes/utils/timer.h"
 #include "bitplanes/utils/error.h"
 
@@ -28,6 +29,9 @@
 #include <opencv2/imgproc.hpp>
 
 #include <Eigen/LU>
+#include <Eigen/Dense>
+#include <iostream>
+#include <csignal>
 
 namespace bp {
 
@@ -94,6 +98,11 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
   while(!has_converged && it++ < max_iters)
   {
     const ParameterVector dp = _solver.solve(_gradient);
+
+    const Eigen::IOFormat fmt(2, Eigen::DontAlignCols, "\t", " ", "", "", "", "");
+    std::cout << BLUE << "[^^^^^^^^^^^^^^^^^^^^^^^^]" << RESET << std::endl;
+    std::cout << "ParameterVector: " << dp.format(fmt) << std::endl;
+
     const auto sum_sq = _residuals.squaredNorm();
     {
       const auto dp_norm = dp.norm();
@@ -113,6 +122,7 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
     }
 
     const Transform Td = _T_inv * MotionModelType::ParamsToMatrix(dp) * _T;
+    std::cout << "Transform: " << Td.format(fmt) << std::endl;
     ret.T = Td * ret.T;
 
     if(!has_converged) {
@@ -146,6 +156,15 @@ float BitplanesTracker<M>::linearize(const cv::Mat& I, const Transform& T)
   _cdata.computeResiduals(_Iw, _residuals);
 
   _gradient = _cdata.jacobian().transpose() * _residuals;
+  // std::raise(SIGINT);
+  auto debug_tmp = _cdata.jacobian();
+
+  const Eigen::IOFormat fmt(2, Eigen::DontAlignCols, "\t", " ", "", "", "", "");
+  std::cout << "wrapImage grad: " << _gradient.format(fmt) << std::endl;
+  std::cout << "_cdata.jacobian(): " << debug_tmp.rows() << ", " << debug_tmp.cols() << std::endl;
+  // std::cout << "_cdata.jacobian()[0]: " << _gradient.block(0, 0, 2, 100) << std::endl;
+  std::cout << "_residuals[xy]: " << _residuals.rows() << ", " << _residuals.cols() << std::endl;
+  // std::cout << "_residuals: " << _residuals.format(fmt) << std::endl;
 
   return _gradient.template lpNorm<Eigen::Infinity>();
 }
@@ -161,5 +180,6 @@ void BitplanesTracker<M>::smoothImage(cv::Mat& I, const cv::Rect& /*roi*/)
 
 template class BitplanesTracker<Homography>;
 template class BitplanesTracker<Translation>;
+template class BitplanesTracker<Affine>;
 
 }; // bp

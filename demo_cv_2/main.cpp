@@ -2,6 +2,7 @@
 #include "bitplanes/core/debug.h"
 #include "bitplanes/core/homography.h"
 #include "bitplanes/core/translation.h"
+#include "bitplanes/core/affine.h"
 #include "bitplanes/core/bitplanes_tracker_pyramid.h"
 #include "bitplanes/core/viz.h"
 
@@ -60,8 +61,11 @@ int main(int argc, char *argv[])
     bp::AlgorithmParameters params;
     params.num_levels = 2;
     params.max_iterations = 50;
-    params.subsampling = 2;
+    params.subsampling = 1;
     params.verbose = false;
+    params.function_tolerance= 1e-4;
+    params.parameter_tolerance = 5e-5;
+    // params.linearizer = bp::AlgorithmParameters::LinearizerType::ForwardCompositional;
 
     std::unique_ptr<TrackerType> _tracker;
     _tracker.reset(new TrackerType(params));
@@ -93,65 +97,72 @@ int main(int argc, char *argv[])
         "outcpp.mp4",
         CV_FOURCC('M', 'P', '4', 'V'),
         10,
-        cv::Size(first_frame.cols, first_frame.rows)
+        cv::Size(384, 384)
     );
 
-    while(true) {
-        cv::Mat image;
-        cv::Mat source_image;
-        cv::Mat image_gray;
-        cv::Mat det_image;
-        
-        cap >> source_image;
-        if (source_image.empty())
-            break;
-        
-        // cv::resize(source_image, image, cv::Size(256, 256));
-        image = source_image;
-        cv::cvtColor(image, image_gray, cv::COLOR_BGR2GRAY);
+    try {
+        while(true) {
+            cv::Mat image;
+            cv::Mat source_image;
+            cv::Mat image_gray;
+            cv::Mat det_image;
+            
+            cap >> source_image;
+            if (source_image.empty())
+                break;
+            
+            cv::resize(source_image, image, cv::Size(384, 384));
+            // image = source_image;
+            cv::cvtColor(image, image_gray, cv::COLOR_BGR2GRAY);
 
-        if (frame_count == 0) {
-            _tracker->setTemplate(image_gray, template_image_roi);
+            if (frame_count == 0) {
+                _tracker->setTemplate(image_gray, template_image_roi);
+            }
+
+            // if (frame_count > 0) {
+            //     using milli = std::chrono::milliseconds;
+            //     auto start = std::chrono::high_resolution_clock::now();
+
+            //     get_optical_flow(_tracker.get(), &last_frame, &image_gray);
+
+            //     auto finish = std::chrono::high_resolution_clock::now();
+            //     std::cout << "get_optical_flow() took "
+            //               << std::chrono::duration_cast<milli>(finish - start).count()
+            //               << " milliseconds\n";
+            // }
+            // last_frame = image_gray;
+            // std::cout << "[DONE] " + std::to_string(frame_count) << std::endl;
+
+            track_result = _tracker->track(image_gray);
+            tform = track_result.T;
+
+            std::string det_image_path = "out_" + std::to_string(frame_count) + ".png";
+            bp::DrawTrackingResult(det_image, image, template_image_roi, tform.data());
+            
+            if (frame_count % 1 == 0) {
+                template_image_roi = bp::RectToROI(template_image_roi, tform.data());
+                std::cout << std::to_string(template_image_roi.x) << ", " << std::to_string(template_image_roi.y) << ", "
+                        << std::to_string(template_image_roi.width) << ", " << std::to_string(template_image_roi.height) << std::endl;
+                // _tracker->setTemplate(image_gray, template_image_roi);
+            }
+
+            if (frame_count % 10 == 0 || true) {
+                std::vector<int> compression_params;
+                compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+                compression_params.push_back(9);
+                cv::imwrite(det_image_path, det_image, compression_params);
+
+                out_video.write(det_image);
+
+                std::cout << GREEN << "[SAVE] " + det_image_path << RESET << std::endl;
+            }
+            frame_count++;
         }
-
-        // if (frame_count > 0) {
-        //     using milli = std::chrono::milliseconds;
-        //     auto start = std::chrono::high_resolution_clock::now();
-
-        //     get_optical_flow(_tracker.get(), &last_frame, &image_gray);
-
-        //     auto finish = std::chrono::high_resolution_clock::now();
-        //     std::cout << "get_optical_flow() took "
-        //               << std::chrono::duration_cast<milli>(finish - start).count()
-        //               << " milliseconds\n";
-        // }
-        // last_frame = image_gray;
-        // std::cout << "[DONE] " + std::to_string(frame_count) << std::endl;
-
-        track_result = _tracker->track(image_gray, tform);
-        tform = track_result.T;
-
-        std::string det_image_path = "out_" + std::to_string(frame_count) + ".png";
-        bp::DrawTrackingResult(det_image, image, template_image_roi, tform.data());
-        
-        if (frame_count % 1 == 0) {
-            template_image_roi = bp::RectToROI(template_image_roi, tform.data());
-            std::cout << std::to_string(template_image_roi.x) << ", " << std::to_string(template_image_roi.y) << ", "
-                      << std::to_string(template_image_roi.width) << ", " << std::to_string(template_image_roi.height) << std::endl;
-            _tracker->setTemplate(image_gray, template_image_roi);
-        }
-
-        if (frame_count % 10 == 0) {
-            std::vector<int> compression_params;
-            compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-            compression_params.push_back(9);
-            cv::imwrite(det_image_path, det_image, compression_params);
-
-            out_video.write(det_image);
-
-            std::cout << "[SAVE] " + det_image_path << std::endl;
-        }
-        frame_count++;
+    }
+    catch(bp::Error) {
+        out_video.release();
+        cap.release();
+        return 0;
     }
 
     out_video.release();

@@ -19,6 +19,7 @@
 #include "bitplanes/core/internal/ct.h"
 #include "bitplanes/core/homography.h"
 #include "bitplanes/core/translation.h"
+#include "bitplanes/core/affine.h"
 #include "bitplanes/core/debug.h"
 #include "bitplanes/utils/error.h"
 
@@ -84,6 +85,15 @@ BitPlanesChannelDataPacked2<M>::set(const cv::Mat& src, const cv::Rect& roi,
     const auto* srow = C.ptr<const uint8_t>(y);
     for(int x = 1; x < C.cols - 1; ++x)
     {
+      /*
+      J(x; θ) = (∂I/∂x') * (∂x'/∂θ)
+         ^         ^           ^
+      _jacobian   G(.)         Jw
+
+      x: pixel coordinate
+      x': pixel coordinate after wrap
+      θ: transformation parameter
+      */
       Jw = M::ComputeWarpJacobian(x+roi.x, y+roi.y, s, c1, c2);
       *pixels_ptr++ = srow[x];
       _jacobian.row(i++) = G(srow, x, 0) * Jw;
@@ -110,6 +120,7 @@ void BitPlanesChannelDataPacked2<M>::computeResiduals(const cv::Mat& Iw,
 
 template class BitPlanesChannelDataPacked2<Homography>;
 template class BitPlanesChannelDataPacked2<Translation>;
+template class BitPlanesChannelDataPacked2<Affine>;
 
 } // bp
 

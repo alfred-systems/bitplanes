@@ -19,6 +19,7 @@
 #include "bitplanes/core/internal/census_signature.h"
 #include "bitplanes/core/homography.h"
 #include "bitplanes/core/translation.h"
+#include "bitplanes/core/affine.h"
 #include "bitplanes/utils/error.h"
 
 #include <opencv2/core.hpp>
@@ -161,6 +162,7 @@ linearize(const cv::Mat& I, const Matrix33f& T, Gradient& g) const
 
 template class BitPlanesSparseData<Homography>;
 template class BitPlanesSparseData<Translation>;
+template class BitPlanesSparseData<Affine>;
 
 } // bp
 

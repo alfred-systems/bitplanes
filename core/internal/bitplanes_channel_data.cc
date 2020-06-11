@@ -22,6 +22,7 @@
 #include "bitplanes/core/internal/ct.h"
 #include "bitplanes/core/homography.h"
 #include "bitplanes/core/translation.h"
+#include "bitplanes/core/affine.h"
 #include "bitplanes/core/debug.h"
 #include "bitplanes/utils/error.h"
 
@@ -194,6 +195,7 @@ void BitPlanesChannelData<M>::computeResiduals(const cv::Mat& Iw, Pixels& residu
 
 template class BitPlanesChannelData<Homography>;
 template class BitPlanesChannelData<Translation>;
+template class BitPlanesChannelData<Affine>;
 
 } // bp
 
