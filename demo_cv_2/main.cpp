@@ -59,9 +59,9 @@ int main(int argc, char *argv[])
     std::cout << "Hello World!" + std::to_string(roi_x) + ", " + std::to_string(roi_y) << std::endl;
 
     bp::AlgorithmParameters params;
-    params.num_levels = 2;
-    params.max_iterations = 50;
-    params.subsampling = 1;
+    params.num_levels = 3;
+    params.max_iterations = 32;
+    params.subsampling = 2;
     params.verbose = false;
     params.function_tolerance= 1e-4;
     params.parameter_tolerance = 5e-5;
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             // last_frame = image_gray;
             // std::cout << "[DONE] " + std::to_string(frame_count) << std::endl;
 
-            track_result = _tracker->track(image_gray);
+            track_result = _tracker->track(image_gray, tform);
             tform = track_result.T;
 
             std::string det_image_path = "out_" + std::to_string(frame_count) + ".png";
@@ -143,6 +143,8 @@ int main(int argc, char *argv[])
                 template_image_roi = bp::RectToROI(template_image_roi, tform.data());
                 std::cout << std::to_string(template_image_roi.x) << ", " << std::to_string(template_image_roi.y) << ", "
                         << std::to_string(template_image_roi.width) << ", " << std::to_string(template_image_roi.height) << std::endl;
+
+                // tform = bp::Matrix33f::Identity();
                 // _tracker->setTemplate(image_gray, template_image_roi);
             }
 

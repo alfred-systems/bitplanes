@@ -57,10 +57,17 @@ auto Translation::ComputeWarpJacobian(float /*x*/, float /*y*/, float /*s*/,
     △W(x'_0?, θ) / △θ_1,
     △W(x'_1?, θ) / △θ_0,   <-- missing part?
     △W(x'_1?, θ) / △θ_1,   <-- missing part?
-  }
+  } = [
+    [1, 0],
+    [0, 1]
+  ]
+
+  ref: https://dsp.stackexchange.com/questions/9604/jacobian-of-affine-warp-in-lucas-kanade-image-alignment
   */
   WarpJacobian Jw;
-  Jw << 1.0, 1.0f;
+  Jw << 
+    1.0, 0.0,
+    0.0, 1.0f;
   return Jw;
 }
 
