@@ -116,7 +116,7 @@ void DrawTrackingResult(cv::Mat& dst, const cv::Mat& src, const cv::Rect& r,
                         int shift)
 {
   if(src.channels() == 1)
-    cv::cvtColor(src, dst, CV_GRAY2BGRA);
+    cv::cvtColor(src, dst, cv::COLOR_GRAY2RGBA);
   else
     src.copyTo(dst);
 

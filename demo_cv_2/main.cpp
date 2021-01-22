@@ -16,12 +16,15 @@
 #include <thread>
 #include <iostream>
 #include <chrono>
+#include <vector>
 
 #include <opencv2/highgui.hpp>
 #include <bitplanes/utils/utils.h>
+#include <opencv2/optflow/rlofflow.hpp>
 
 typedef std::unique_ptr<cv::Mat> ImagePointer;
 typedef bp::BitPlanesTrackerPyramid<bp::Translation> TrackerType;
+const int SKIP = 1;
 
 void get_optical_flow(TrackerType *tracker, cv::Mat *ref_frame, cv::Mat *new_frame) {
     int img_h = ref_frame->rows;
@@ -52,11 +55,10 @@ void get_optical_flow(TrackerType *tracker, cv::Mat *ref_frame, cv::Mat *new_fra
 
 int main(int argc, char *argv[])
 {
-    std::cout << std::string(argv[1]) + ", " + std::string(argv[2]) + ", " + std::string(argv[3]) + ", " + std::string(argv[4]) << std::endl;
-    int roi_x = std::stoi(std::string(argv[2]));
-    int roi_y = std::stoi(std::string(argv[3]));
-    int roi_size = std::stoi(std::string(argv[4]));
-    std::cout << "Hello World!" + std::to_string(roi_x) + ", " + std::to_string(roi_y) << std::endl;
+    std::cout << std::string(argv[1]) + ", " + std::string(argv[2]) + ", " + std::string(argv[3]) << std::endl;
+    int start_frame = std::stoi(std::string(argv[2]));
+    int end_frame = std::stoi(std::string(argv[3]));
+    std::cout << "Hello World!" + std::to_string(start_frame) + ", " + std::to_string(end_frame) << std::endl;
 
     bp::AlgorithmParameters params;
     params.num_levels = 3;
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
     
     // cv::cvtColor(template_resize, template_image_gray, cv::COLOR_BGR2GRAY);
 
-    cv::Rect template_image_roi(roi_x, roi_y, roi_size, roi_size);
+    // cv::Rect template_image_roi(roi_x, roi_y, roi_size, roi_size);
     // _tracker->setTemplate(template_image_gray, template_image_roi);
 
     std::string input_video(argv[1]);
@@ -96,13 +98,38 @@ int main(int argc, char *argv[])
 
     cv::Mat first_frame;
     cv::Mat last_frame;
+    cv::Mat last_frame_gray;
     cap >> first_frame;
     cv::VideoWriter out_video(
         "outcpp.mp4",
-        CV_FOURCC('M', 'P', '4', 'V'),
+        cv::VideoWriter::fourcc('M', 'P', '4', 'V'),
         10,
-        cv::Size(image_size, image_size)
-    );
+        cv::Size(image_size, image_size));
+
+    cv::Ptr<cv::optflow::RLOFOpticalFlowParameter> rlof_param = cv::optflow::RLOFOpticalFlowParameter::create();
+    rlof_param->setSupportRegionType(cv::optflow::SR_FIXED);
+    cv::Ptr<cv::optflow::SparseRLOFOpticalFlow>
+        rlof = cv::optflow::SparseRLOFOpticalFlow::create(rlof_param);
+    // auto rlof = cv::optflow::createOptFlow_SparseRLOF();
+
+    std::vector<cv::Point2f> p0, p1;
+    for(float y = 0; y < image_size; y+=15) {
+        for(float x = 0; x < image_size; x+=15) {
+            p0.push_back(cv::Point2f(x, y));
+        }
+    }
+
+    cv::Mat mask = cv::Mat::zeros(cv::Size(image_size, image_size), CV_8UC3);
+    std::vector<cv::Scalar> colors;
+    cv::RNG rng;
+
+    for (int i = 0; i < 100; i++)
+    {
+        int r = rng.uniform(0, 256);
+        int g = rng.uniform(0, 256);
+        int b = rng.uniform(0, 256);
+        colors.push_back(cv::Scalar(r, g, b));
+    }
 
     try {
         while(true) {
@@ -110,69 +137,90 @@ int main(int argc, char *argv[])
             cv::Mat source_image;
             cv::Mat image_gray;
             cv::Mat det_image;
-            
+            cv::Mat dot_image;
+
+            std::vector<uchar> status;
+            std::vector<float> err;
+
             cap >> source_image;
             if (source_image.empty())
                 break;
-            
+
+            std::cout << BLUE << "[READ FRAME] " << RESET << std::to_string(frame_count) << std::endl;
             cv::resize(source_image, image, cv::Size(image_size, image_size));
-            // image = source_image;
             cv::cvtColor(image, image_gray, cv::COLOR_BGR2GRAY);
 
-            if (frame_count % 2 != 0){
+            if (frame_count == 0) {
+                last_frame = image;
+                last_frame_gray = image_gray;
+            }
+            else if (frame_count % SKIP != 0 || frame_count < start_frame)
+            {
+                last_frame = image;
+                last_frame_gray = image_gray;
                 frame_count++;
                 continue;
             }
-
-            if (frame_count == 0) {
-                _tracker->setTemplate(image_gray, template_image_roi);
+            else if (frame_count > end_frame) {
+                break;
             }
+            else {
+                // rlof->calc(last_frame_gray, image_gray, p0, p1, status, err);
+                cv::TermCriteria criteria = cv::TermCriteria((cv::TermCriteria::COUNT) + (cv::TermCriteria::EPS), 10, 0.03);
+                cv::calcOpticalFlowPyrLK(last_frame_gray, image_gray, p0, p1, status, err, cv::Size(15, 15), 2, criteria);
 
-            track_result = _tracker->track(image_gray, tform);
-            tform = track_result.T;
+                det_image = dot_image = last_frame = image;
+                last_frame_gray = image_gray;
 
-            std::string det_image_path = "out_" + std::to_string(frame_count) + ".png";
-
-            cv::Rect track_roi(
-                template_image_roi.x + tform(0, 2),
-                template_image_roi.y + tform(1, 2),
-                roi_size,
-                roi_size);
-            // bp::DrawTrackingResult(det_image, image, track_roi, mtxI.data());
-            bp::DrawTrackingResult(det_image, image, template_image_roi, tform.data());
-            
-            if (frame_count % 1 == 0) {
-                std::cout << "transform mtx: " << tform << std::endl;
-                template_image_roi = bp::RectToROI(template_image_roi, tform.data());
-                tform = bp::Matrix33f::Identity();
-                _tracker->setTemplate(image_gray, template_image_roi);
+                std::vector<cv::Point2f> good_new;
                 
-                // std::cout 
-                //     << std::to_string(template_image_roi.x) << ", "
-                //     << std::to_string(template_image_roi.y) << ", "
-                //     << std::to_string(template_image_roi.width) << ", "
-                //     << std::to_string(template_image_roi.height) << std::endl;
 
-
-                if (template_image_roi.x < 0 || template_image_roi.y < 0 
-                    || template_image_roi.x + template_image_roi.width >= image_size
-                    || template_image_roi.y + template_image_roi.height >= image_size) {
-                    break;
+                for (uint i = 0; i < p0.size(); i++)
+                {
+                    // Select good points
+                    if (status[i] == 1)
+                    {
+                        if (good_new.size() == 0) {
+                            std::cout << "(" + std::to_string(p1[i].x) + ", " + std::to_string(p1[i].y) + ")" << std::endl;
+                        }
+                        
+                        good_new.push_back(p1[i]);
+                        // draw the tracks
+                        cv::line(mask, p1[i], p0[i], colors[i % 100], 2);
+                        cv::circle(dot_image, p1[i], 3, colors[i % 100], -1);
+                        cv::add(dot_image, mask, det_image);
+                    }
                 }
-            }
+                std::cout << BLUE << "[TRACK] " << RESET << std::to_string(good_new.size()) << std::endl;
+                p0 = good_new;
 
-            if (frame_count % 10 == 0 || true) {
-                cv::putText(
-                    det_image, std::to_string(frame_count),
-                    cv::Point(10, image_size - 10), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 0, 255), 3);
-                std::vector<int> compression_params;
-                compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-                compression_params.push_back(9);
-                cv::imwrite(det_image_path, det_image, compression_params);
+                std::string det_image_path = "out_" + std::to_string(frame_count) + ".png";
 
-                out_video.write(det_image);
+                if (frame_count % SKIP == 0 || true) {
+                    cv::putText(
+                        det_image, std::to_string(frame_count),
+                        cv::Point(10, image_size - 10), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 0, 255), 3);
+                    std::vector<int> compression_params;
+                    compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+                    compression_params.push_back(9);
+                    // cv::imwrite(det_image_path, det_image, compression_params);
 
-                std::cout << GREEN << "[SAVE] " + det_image_path << RESET << std::endl;
+                    out_video.write(det_image);
+
+                    std::cout << GREEN << "[SAVE] " + det_image_path << RESET << std::endl;
+                }
+
+                if (good_new.size() == 0){
+                    p0.clear();
+                    for (float y = 0; y < image_size; y += 10)
+                    {
+                        for (float x = 0; x < image_size; x += 10)
+                        {
+                            p0.push_back(cv::Point2f(x, y));
+                        }
+                    }
+                    // break;
+                }
             }
             frame_count++;
         }

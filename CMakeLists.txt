@@ -127,9 +127,9 @@ endif()
 # REQUIRED libraries
 #
 # we need opencv3! TODO check version
-set(OpenCV_DIR "/opt/opencv3/share/OpenCV/")
+set(OpenCV_DIR "/usr/local/share/opencv4")
 
-find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui imgcodecs features2d calib3d)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui imgcodecs features2d calib3d optflow)
 list(APPEND MY_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND MY_LINK_DIRS    ${OpenCV_LINK_DIRECTORIES})
 list(APPEND MY_LIBRARIES    ${OpenCV_LIBS})
