@@ -97,6 +97,7 @@ Result BitPlanesTrackerPyramid<M>::track(const cv::Mat& I, const Transform& T_in
   {
     ret = _pyramid[i].track(I_pyr[i], ret.T);
     if(i != 0) ret.T = MotionModelType::Scale(ret.T, 2.0);
+    std::cout << CYAN << "[^^^^^^^^^^^^^^^^^^^^^^^^]" << RESET << std::endl;
   }
 
   _T_init = ret.T;

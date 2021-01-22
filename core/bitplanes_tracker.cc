@@ -95,6 +95,10 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
   float old_sum_sq = std::numeric_limits<float>::max();
   bool has_converged = false;
   int it = 1;
+  
+  Transform minT;
+  float min_error = 999999;
+
   while(!has_converged && it++ < max_iters)
   {
     const ParameterVector dp = _solver.solve(_gradient);
@@ -104,6 +108,7 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
     std::cout << "ParameterVector: " << dp.format(fmt) << std::endl;
 
     const auto sum_sq = _residuals.squaredNorm();
+    std::cout << "sum_sq: " << sum_sq << std::endl;
     {
       const auto dp_norm = dp.norm();
       const auto p_norm = MotionModelType::MatrixToParams(ret.T).norm();
@@ -125,6 +130,11 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
     std::cout << "Transform: " << Td.format(fmt) << std::endl;
     ret.T = Td * ret.T;
 
+    if (sum_sq < min_error) {
+      min_error = sum_sq;
+      minT = ret.T;
+    }
+
     if(!has_converged) {
       g_norm = this->linearize(_I, ret.T);
     }
@@ -134,6 +144,8 @@ Result BitplanesTracker<M>::track(const cv::Mat& image, const Transform& T_init)
   ret.num_iterations = it;
   ret.final_ssd_error = old_sum_sq;
   ret.first_order_optimality = g_norm;
+  // ret.T = minT;
+  
   if(ret.status == OptimizerStatus::NotStarted) {
     ret.status = OptimizerStatus::MaxIterations;
     if(verbose) {
@@ -161,9 +173,11 @@ float BitplanesTracker<M>::linearize(const cv::Mat& I, const Transform& T)
 
   const Eigen::IOFormat fmt(2, Eigen::DontAlignCols, "\t", " ", "", "", "", "");
   std::cout << "wrapImage grad: " << _gradient.format(fmt) << std::endl;
-  std::cout << "_cdata.jacobian(): " << debug_tmp.rows() << ", " << debug_tmp.cols() << std::endl;
+  std::cout << "I size: " << I.cols << ", " << I.rows << std::endl;
+  std::cout << "_Iw size: " << _Iw.cols << ", " << _Iw.rows << std::endl;
+  // std::cout << "_cdata.jacobian(): " << debug_tmp.rows() << ", " << debug_tmp.cols() << std::endl;
   // std::cout << "_cdata.jacobian()[0]: " << _gradient.block(0, 0, 2, 100) << std::endl;
-  std::cout << "_residuals[xy]: " << _residuals.rows() << ", " << _residuals.cols() << std::endl;
+  // std::cout << "_residuals[xy]: " << _residuals.rows() << ", " << _residuals.cols() << std::endl;
   // std::cout << "_residuals: " << _residuals.format(fmt) << std::endl;
 
   return _gradient.template lpNorm<Eigen::Infinity>();

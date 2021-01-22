@@ -27,6 +27,7 @@
 #include <opencv2/core.hpp>
 
 #include <type_traits>
+#include <iostream>
 
 namespace bp {
 
@@ -34,10 +35,14 @@ namespace bp {
 static inline int GetNumValid(const cv::Rect& roi, int s)
 {
   int ret = 0;
-  for(int y = 1; y < roi.height-1; y += s)
-    for(int x = 1; x < roi.width-1; x += s)
+  for(int y = 1; y < roi.height-1; y += s) {
+    for(int x = 1; x < roi.width-1; x += s) {
       ++ret;
+    }
+  }
 
+  // std::cout << "GetNumValid: " << CYAN << ret << RESET <<
+  //   " [" << roi.height << ", " << roi.width << "]" << std::endl;
   return ret;
 }
 
@@ -126,7 +131,7 @@ computeResiduals(const cv::Mat& Iw, Residuals& residuals) const
   }
 
   using namespace Eigen;
-  residuals=Map<Vector_<CType>, Aligned>(buf,_pixels.size()*8,1).template cast<float>();
+  residuals = Map<Vector_<CType>, Aligned>(buf, _pixels.size() * 8, 1).template cast<float>();
 }
 
 

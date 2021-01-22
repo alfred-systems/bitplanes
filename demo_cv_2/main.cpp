@@ -61,10 +61,11 @@ int main(int argc, char *argv[])
     bp::AlgorithmParameters params;
     params.num_levels = 3;
     params.max_iterations = 32;
-    params.subsampling = 2;
+    params.subsampling = 1;
     params.verbose = false;
     params.function_tolerance= 1e-4;
     params.parameter_tolerance = 5e-5;
+    params.sigma = 1.2;
     // params.linearizer = bp::AlgorithmParameters::LinearizerType::ForwardCompositional;
 
     std::unique_ptr<TrackerType> _tracker;
@@ -88,7 +89,10 @@ int main(int argc, char *argv[])
     cv::VideoCapture cap(input_video);
     bp::Result track_result;
     bp::Matrix33f tform(bp::Matrix33f::Identity());
+    bp::Matrix33f mtxI(bp::Matrix33f::Identity());
+    
     int frame_count = 0;
+    const int image_size = 384;
 
     cv::Mat first_frame;
     cv::Mat last_frame;
@@ -97,7 +101,7 @@ int main(int argc, char *argv[])
         "outcpp.mp4",
         CV_FOURCC('M', 'P', '4', 'V'),
         10,
-        cv::Size(384, 384)
+        cv::Size(image_size, image_size)
     );
 
     try {
@@ -111,44 +115,56 @@ int main(int argc, char *argv[])
             if (source_image.empty())
                 break;
             
-            cv::resize(source_image, image, cv::Size(384, 384));
+            cv::resize(source_image, image, cv::Size(image_size, image_size));
             // image = source_image;
             cv::cvtColor(image, image_gray, cv::COLOR_BGR2GRAY);
+
+            if (frame_count % 2 != 0){
+                frame_count++;
+                continue;
+            }
 
             if (frame_count == 0) {
                 _tracker->setTemplate(image_gray, template_image_roi);
             }
 
-            // if (frame_count > 0) {
-            //     using milli = std::chrono::milliseconds;
-            //     auto start = std::chrono::high_resolution_clock::now();
-
-            //     get_optical_flow(_tracker.get(), &last_frame, &image_gray);
-
-            //     auto finish = std::chrono::high_resolution_clock::now();
-            //     std::cout << "get_optical_flow() took "
-            //               << std::chrono::duration_cast<milli>(finish - start).count()
-            //               << " milliseconds\n";
-            // }
-            // last_frame = image_gray;
-            // std::cout << "[DONE] " + std::to_string(frame_count) << std::endl;
-
             track_result = _tracker->track(image_gray, tform);
             tform = track_result.T;
 
             std::string det_image_path = "out_" + std::to_string(frame_count) + ".png";
+
+            cv::Rect track_roi(
+                template_image_roi.x + tform(0, 2),
+                template_image_roi.y + tform(1, 2),
+                roi_size,
+                roi_size);
+            // bp::DrawTrackingResult(det_image, image, track_roi, mtxI.data());
             bp::DrawTrackingResult(det_image, image, template_image_roi, tform.data());
             
             if (frame_count % 1 == 0) {
+                std::cout << "transform mtx: " << tform << std::endl;
                 template_image_roi = bp::RectToROI(template_image_roi, tform.data());
-                std::cout << std::to_string(template_image_roi.x) << ", " << std::to_string(template_image_roi.y) << ", "
-                        << std::to_string(template_image_roi.width) << ", " << std::to_string(template_image_roi.height) << std::endl;
+                tform = bp::Matrix33f::Identity();
+                _tracker->setTemplate(image_gray, template_image_roi);
+                
+                // std::cout 
+                //     << std::to_string(template_image_roi.x) << ", "
+                //     << std::to_string(template_image_roi.y) << ", "
+                //     << std::to_string(template_image_roi.width) << ", "
+                //     << std::to_string(template_image_roi.height) << std::endl;
 
-                // tform = bp::Matrix33f::Identity();
-                // _tracker->setTemplate(image_gray, template_image_roi);
+
+                if (template_image_roi.x < 0 || template_image_roi.y < 0 
+                    || template_image_roi.x + template_image_roi.width >= image_size
+                    || template_image_roi.y + template_image_roi.height >= image_size) {
+                    break;
+                }
             }
 
             if (frame_count % 10 == 0 || true) {
+                cv::putText(
+                    det_image, std::to_string(frame_count),
+                    cv::Point(10, image_size - 10), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0, 0, 255), 3);
                 std::vector<int> compression_params;
                 compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
                 compression_params.push_back(9);

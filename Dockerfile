@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 # LABEL maintainer "jakub.skalecki@gmail.com"
-ENV OPENCV_VERSION 3.4.2
+ENV OPENCV_VERSION 4.5.1
 
 # Install all dependencies for OpenCV
 RUN apt-get -y update && \
